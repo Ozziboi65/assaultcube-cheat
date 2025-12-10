@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="neverwin.vcxproj" Id="a187dcf2-6ae6-47a0-a500-f8d9cf179184">
+    <Platform Solution="Debug|x64" Project="Win32" />
+  </Project>
+</Solution>
