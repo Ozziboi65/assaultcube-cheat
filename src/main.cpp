@@ -180,7 +180,7 @@ int main() {
     LoadTextureFromFile("assault_cube.png", &logo_pic, &logo_width, &logo_height);
 
     bool running = true;
-    while (running) {
+    while (running) { //main loop
         if (gameWindow && IsWindow(gameWindow)) {
             RECT rect;
             if (GetWindowRect(gameWindow, &rect)) {
@@ -199,6 +199,13 @@ int main() {
                 running = false;
         }
         if (!running) break;
+
+        static bool zKeyPrev = false;
+        bool zKeyCurr = (GetAsyncKeyState('Z') & 0x8000);
+        if (zKeyCurr && !zKeyPrev) {
+            aimbot_enabled = !aimbot_enabled;
+        }
+        zKeyPrev = zKeyCurr;
 
         
         BeginImGuiFrame();
@@ -221,6 +228,7 @@ int main() {
             );
         }
 
+        
         // Get local player
         uintptr_t localPlayer = 0;
         ReadProcessMemory(hProcess, (LPCVOID)(moduleBase + 0x17E0A8), &localPlayer, sizeof(localPlayer), nullptr);
@@ -283,6 +291,7 @@ int main() {
             ImGui::Checkbox("AIMBOT", &aimbot_enabled);
             ImGui::SliderFloat("FOV", &aimbot_fov, 10.0f, 180.0f);
             ImGui::Checkbox("AIM AT ALL", &aimbot_all);
+            ImGui::Text("Toggle with Z");
             
             ImGui::Separator();
             
