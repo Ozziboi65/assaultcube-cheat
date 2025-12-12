@@ -33,7 +33,7 @@ void CalculateAngles(Vec3 from, Vec3 to, float& yaw, float& pitch) {
     pitch = atan2f(dz, distance) * (180.0f / 3.14159265f);
 }
 
-void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t localPlayer, bool enabled, float fov) {
+void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t localPlayer, bool enabled, float fov, float maxDistance) {
     if (!enabled || !localPlayer) return;
 
 
@@ -67,7 +67,14 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
         ReadProcessMemory(hProcess, (LPCVOID)(entity + HEALTH), &health, sizeof(int), nullptr);
         ReadProcessMemory(hProcess, (LPCVOID)(entity + TEAM), &team, sizeof(int), nullptr);
 
+        // skips enemy over the max distance for aimbot :3
+        Vec3 enemyHead = { 0, 0, 0 };
+        ReadProcessMemory(hProcess, (LPCVOID)(entity + HEAD_X), &enemyHead.x, sizeof(float), nullptr);
+        ReadProcessMemory(hProcess, (LPCVOID)(entity + HEAD_Y), &enemyHead.y, sizeof(float), nullptr);
+        ReadProcessMemory(hProcess, (LPCVOID)(entity + HEAD_Z), &enemyHead.z, sizeof(float), nullptr);
 
+        float distance = GetDistance(localHead, enemyHead);
+        if (distance > maxDistance) continue;
 
         if (health <= 0 || health > 100) continue;
 
@@ -75,10 +82,6 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
 
 
 
-        Vec3 enemyHead = { 0, 0, 0 };
-        ReadProcessMemory(hProcess, (LPCVOID)(entity + HEAD_X), &enemyHead.x, sizeof(float), nullptr);
-        ReadProcessMemory(hProcess, (LPCVOID)(entity + HEAD_Y), &enemyHead.y, sizeof(float), nullptr);
-        ReadProcessMemory(hProcess, (LPCVOID)(entity + HEAD_Z), &enemyHead.z, sizeof(float), nullptr);
 
         // Calculate angles to this enemy
         float targetYaw, targetPitch;
@@ -94,8 +97,8 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
 
         if (yawDiff > fov / 2.0f || pitchDiff > fov / 2.0f) continue;
 
-        float distance = GetDistance(localHead, enemyHead);
-        if (distance < closestDistance && distance > 1.0f) {  
+        distance = GetDistance(localHead, enemyHead); // just update the value, don't redeclare
+        if (distance < closestDistance && distance > 1.0f) {
             closestDistance = distance;
             closestEnemy = entity;
         }

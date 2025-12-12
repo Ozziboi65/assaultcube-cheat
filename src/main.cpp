@@ -41,6 +41,7 @@ float aimbot_fov = 90.0f;
 bool aimbot_all = false;
 bool fov_circle_enabled = false;
 bool rapid_fire_enabled = false;
+float aimbot_max_distance = 500.0f;
 
 
 ID3D11ShaderResourceView* logo_pic = nullptr;
@@ -234,7 +235,7 @@ int main() {
         ReadProcessMemory(hProcess, (LPCVOID)(moduleBase + 0x17E0A8), &localPlayer, sizeof(localPlayer), nullptr);
         
         if (aimbot_enabled && localPlayer) {
-            UpdateAimbot(aimbot_all, hProcess, moduleBase, localPlayer, aimbot_enabled, aimbot_fov);
+            UpdateAimbot(aimbot_all, hProcess, moduleBase, localPlayer, aimbot_enabled, aimbot_fov, aimbot_max_distance);
         }
         
         if (spinbot_enabled && localPlayer) {
@@ -292,6 +293,7 @@ int main() {
             ImGui::SliderFloat("FOV", &aimbot_fov, 10.0f, 180.0f);
             ImGui::Checkbox("AIM AT ALL", &aimbot_all);
             ImGui::Text("Toggle with Z");
+            ImGui::SliderFloat("MAX DISTANCE", &aimbot_max_distance, 5.0f, 750.0f);
             
             ImGui::Separator();
             
