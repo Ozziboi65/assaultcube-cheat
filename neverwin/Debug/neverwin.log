@@ -12,6 +12,6 @@
   imgui_impl_dx11.cpp
   imgui_impl_win32.cpp
   Generating Code...
-  neverwin.vcxproj -> C:\cheat\AC\neverwin\Debug\neverwin.exe
+  neverwin.vcxproj -> C:\cheat\neverwin-assaultcube\Debug\neverwin.exe
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.
