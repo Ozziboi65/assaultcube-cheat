@@ -61,4 +61,52 @@ namespace Config {
 	void setfovcircleenabled(bool value) {
 		config["fov_circle_enabled"] = value;
 	}
+
+	void setsnaplines(bool enablesnaplines) {
+		config["enablesnaplines"] = enablesnaplines;
+	}
+
+	void setsnaplinesall(bool value) {
+		config["snaplinesALL"] = value;
+	}
+
+
+    void setaimbotfov(float newAimbotFov){
+        config["aimbotfov"] = newAimbotFov;
+    }
+
+    void setaimbotdist(float newAimbotdist){
+        config["aimbotdist"] = newAimbotdist;
+    }
+
+	float getAimbotFov(){
+		if (config.contains("aimbotfov")) {
+			return config["aimbotfov"].get<float>();
+		}
+		return 90; // default aimbot fov if fail
+	}
+
+	float getAimbotmaxdist(){
+		if (config.contains("aimbotdist")) {
+			return config["aimbotdist"].get<float>();
+		}
+
+		return 750; //750 for  aim dist if fail
+	}
+
+	bool getsnaplines() {
+		if (config.contains("enablesnaplines")) {
+			return config["enablesnaplines"].get<bool>();
+		}
+		return true; 
+	}
+
+	bool getsnaplinesall() {
+		if (config.contains("snaplinesALL")) {
+			return config["snaplinesALL"].get<bool>();
+		}
+		return true; 
+	}
+
+
 }

@@ -12,8 +12,16 @@ namespace Config {
 	bool getAimbotEnabled();
 	float getfov();
 	bool getfovcircleenabled();
+	float getAimbotFov();
+	float getAimbotmaxdist();
+	bool getsnaplines();
+	bool getsnaplinesall();
 
 	void setAimbotEnabled(bool enabled); 
     void setfov(float newFov);
 	void setfovcircleenabled(bool enabled);
+	void setaimbotfov(float newAimbotFov);
+	void setaimbotdist(float newAimbotdist);
+	void setsnaplines(bool enablesnaplines);
+	void setsnaplinesall(bool snaplinesaALL);
 }

@@ -38,4 +38,4 @@ T ReadMemory(HANDLE hProcess, uintptr_t address) {
 bool WorldToScreen(Vec3 pos, float matrix[16], Vec2& screen, int screenWidth, int screenHeight);
 
 
-void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWidth, int screenHeight);
+void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWidth, int screenHeight, bool snaplines, bool snaplinesall);

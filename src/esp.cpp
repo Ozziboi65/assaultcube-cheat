@@ -1,7 +1,7 @@
 #include "esp.h"
 #include "ect/imgui/imgui.h"
 #include <windows.h>
-
+#include "config.h"
 
 bool WorldToScreen(Vec3 pos, float matrix[16], Vec2& screen, int screenWidth, int screenHeight) {
 
@@ -27,7 +27,7 @@ bool WorldToScreen(Vec3 pos, float matrix[16], Vec2& screen, int screenWidth, in
 }
 
 
-void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWidth, int screenHeight) {
+void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWidth, int screenHeight, bool snaplines, bool snaplines_all) {
 
     uintptr_t localPlayer = ReadMemory<uintptr_t>(hProcess, moduleBase + Offsets::LOCALPLAYER);
     uintptr_t entityList = ReadMemory<uintptr_t>(hProcess, moduleBase + Offsets::ENTITYLIST);
@@ -87,6 +87,23 @@ void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWi
             ImVec2(headScreen.x - boxWidth / 2 - 3, feetScreen.y),
             IM_COL32(0, 0, 0, 255)
         );
+
+        if (team != localTeam && snaplines) {
+            drawList->AddLine(
+                ImVec2(screenWidth / 2.0f, 0),
+                ImVec2(headScreen.x, headScreen.y),
+                IM_COL32(255, 255, 0, 255), // enemy color
+                1.0f
+            );
+        } else if (team == localTeam && snaplines_all) {
+            drawList->AddLine(
+                ImVec2(screenWidth / 2.0f, 0),
+                ImVec2(headScreen.x, headScreen.y),
+                IM_COL32(0, 255, 0, 255), // teammate color
+                1.0f
+            );
+        }
+
 
         float healthPercent = health / 100.0f;
         ImU32 healthColor = IM_COL32(

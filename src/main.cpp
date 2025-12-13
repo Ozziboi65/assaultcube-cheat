@@ -50,6 +50,8 @@ bool rapid_fire_enabled = false;
 float aimbot_max_distance = 250.0f;
 float fov = 115.0f;
 float headoffset = 0.275f;
+bool snaplines = true;
+bool snaplines_all = false;
 
 
 
@@ -107,12 +109,25 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
+
+#include <shellscalingapi.h>
+#pragma comment(lib, "Shcore.lib")
+
+
 int main() {
+    // Make process DPI aware to fix ImGui hitbox/input offset
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    // ImGui DPI helper (call before window creation)
+    ImGui_ImplWin32_EnableDpiAwareness();
 
 
     Config::load("config.json");//load config
     fov = Config::getfov();// get fov
     fov_circle_enabled = Config::getfovcircleenabled();
+    aimbot_fov = Config::getAimbotFov();
+    aimbot_max_distance = Config::getAimbotmaxdist();
+    snaplines = Config::getsnaplines();
+    snaplines_all = Config::getsnaplinesall();
 
 
     ShowWindow(GetConsoleWindow(), SW_HIDE);
@@ -230,11 +245,19 @@ int main() {
         zKeyPrev = zKeyCurr;
 
         
+/*
+        POINT mousePoint;
+        if (GetCursorPos(&mousePoint)) {
+            ScreenToClient(hwnd, &mousePoint);
+            ImGuiIO& io = ImGui::GetIO();
+            io.MousePos = ImVec2((float)mousePoint.x, (float)mousePoint.y);
+        }
+*/
         BeginImGuiFrame();
 
         // Render ESP
         if (espEnabled) {
-            RenderESP(teamEsp, hProcess, moduleBase, screenWidth, screenHeight);
+            RenderESP(teamEsp, hProcess, moduleBase, screenWidth, screenHeight, snaplines, snaplines_all);
         }
 
         // Render FOV circle
@@ -292,7 +315,7 @@ int main() {
 /////////////////////////////////////////////////////////////////////////////
 
         ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(500, 300), ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_Once);
         ImGui::Begin("NEVER-WIN", nullptr);
 
 
@@ -342,6 +365,9 @@ int main() {
             ImGui::Separator();
             
             ImGui::Checkbox("FOV Circle", &fov_circle_enabled);
+            ImGui::Checkbox("snaplines", &snaplines);
+            ImGui::Separator();
+            ImGui::Checkbox("snaplines, show all", &snaplines_all);
             
             ImGui::EndTabItem();
         }
@@ -393,6 +419,9 @@ int main() {
 
             if (ImGui::Button("apply to config")) {
                 Config::setfovcircleenabled(fov_circle_enabled);
+                Config::setaimbotfov(aimbot_fov);
+                Config::setaimbotdist(aimbot_max_distance);
+                Config::setsnaplines(snaplines);
                 Config::save("config.json");
             }
         
