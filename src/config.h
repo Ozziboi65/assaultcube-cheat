@@ -11,7 +11,9 @@ namespace Config {
 
 	bool getAimbotEnabled();
 	float getfov();
+	bool getfovcircleenabled();
 
 	void setAimbotEnabled(bool enabled); 
     void setfov(float newFov);
+	void setfovcircleenabled(bool enabled);
 }

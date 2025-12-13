@@ -14,8 +14,9 @@
 #include <chrono>
 #include "ect/json.hpp"
 #include "config.h"
-
-
+#include <thread>
+#include <mutex>
+#include <atomic>
 
 /*
     i like to steal ascii art from the internet because i have no talent :3
@@ -48,6 +49,7 @@ bool fov_circle_enabled = false;
 bool rapid_fire_enabled = false;
 float aimbot_max_distance = 500.0f;
 float fov = 115.0f;
+
 
 
 //fps
@@ -109,6 +111,7 @@ int main() {
 
     Config::load("config.json");//load config
     fov = Config::getfov();// get fov
+    fov_circle_enabled = Config::getfovcircleenabled();
 
 
     ShowWindow(GetConsoleWindow(), SW_HIDE);
@@ -313,6 +316,7 @@ int main() {
             GradientPresets::Sexy("MADE BY linktr.ee/sigmacat123");
 
             if (ImGui::Button("update json")) {
+                Config::setfovcircleenabled(fov_circle_enabled);
                 Config::save("config.json");
             }
             

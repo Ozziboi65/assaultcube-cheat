@@ -50,4 +50,15 @@ namespace Config {
 
 		return 115; //115 for almost default fov
 	}
+
+	bool getfovcircleenabled() {
+		if (config.contains("fov_circle_enabled")) {
+			return config["fov_circle_enabled"].get<bool>();
+		}
+		return false; 
+	}
+
+	void setfovcircleenabled(bool value) {
+		config["fov_circle_enabled"] = value;
+	}
 }
