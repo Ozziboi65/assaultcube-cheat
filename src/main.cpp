@@ -42,6 +42,7 @@ bool aimbot_all = false;
 bool fov_circle_enabled = false;
 bool rapid_fire_enabled = false;
 float aimbot_max_distance = 500.0f;
+float fov = 120.0f;
 
 
 ID3D11ShaderResourceView* logo_pic = nullptr;
@@ -233,7 +234,12 @@ int main() {
         // Get local player
         uintptr_t localPlayer = 0;
         ReadProcessMemory(hProcess, (LPCVOID)(moduleBase + 0x17E0A8), &localPlayer, sizeof(localPlayer), nullptr);
+
+
+        WriteProcessMemory(hProcess, (LPVOID)(moduleBase + 0x18A7CC), &fov, sizeof(fov), nullptr); //WRITE FOV
         
+        
+
         if (aimbot_enabled && localPlayer) {
             UpdateAimbot(aimbot_all, hProcess, moduleBase, localPlayer, aimbot_enabled, aimbot_fov, aimbot_max_distance);
         }
@@ -277,7 +283,12 @@ int main() {
             GradientPresets::Sexy("VISUALS");
             ImGui::Checkbox("ESP", &espEnabled);
             ImGui::Checkbox("TEAM ESP", &teamEsp);
+
             
+            ImGui::Separator();
+
+            ImGui::SliderFloat("FOV", &fov, 30.0f, 200.0f);
+
             ImGui::Separator();
             
             ImGui::Checkbox("FOV Circle", &fov_circle_enabled);
