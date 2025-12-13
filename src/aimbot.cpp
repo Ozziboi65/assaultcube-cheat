@@ -33,7 +33,7 @@ void CalculateAngles(Vec3 from, Vec3 to, float& yaw, float& pitch) {
     pitch = atan2f(dz, distance) * (180.0f / 3.14159265f);
 }
 
-void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t localPlayer, bool enabled, float fov, float maxDistance) {
+void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t localPlayer, bool enabled, float fov, float maxDistance, float headoffset) {
     if (!enabled || !localPlayer) return;
 
 
@@ -111,8 +111,9 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
         ReadProcessMemory(hProcess, (LPCVOID)(closestEnemy + HEAD_Y), &enemyHead.y, sizeof(float), nullptr);
         ReadProcessMemory(hProcess, (LPCVOID)(closestEnemy + HEAD_Z), &enemyHead.z, sizeof(float), nullptr);
 
-
+        
         enemyHead.z += 0.0f; //     aim up/down
+        enemyHead.z += headoffset;
 
         float targetYaw, targetPitch;
         CalculateAngles(localHead, enemyHead, targetYaw, targetPitch);

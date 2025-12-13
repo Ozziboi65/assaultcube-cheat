@@ -47,8 +47,9 @@ float aimbot_fov = 90.0f;
 bool aimbot_all = false;
 bool fov_circle_enabled = false;
 bool rapid_fire_enabled = false;
-float aimbot_max_distance = 500.0f;
+float aimbot_max_distance = 250.0f;
 float fov = 115.0f;
+float headoffset = 0.275f;
 
 
 
@@ -265,7 +266,7 @@ int main() {
         
 
         if (aimbot_enabled && localPlayer) {
-            UpdateAimbot(aimbot_all, hProcess, moduleBase, localPlayer, aimbot_enabled, aimbot_fov, aimbot_max_distance);
+            UpdateAimbot(aimbot_all, hProcess, moduleBase, localPlayer, aimbot_enabled, aimbot_fov, aimbot_max_distance, headoffset);
         }
         
         if (spinbot_enabled && localPlayer) {
@@ -315,10 +316,6 @@ int main() {
         {
             GradientPresets::Sexy("MADE BY linktr.ee/sigmacat123");
 
-            if (ImGui::Button("update json")) {
-                Config::setfovcircleenabled(fov_circle_enabled);
-                Config::save("config.json");
-            }
             
             ImGui::Spacing();
 
@@ -353,14 +350,6 @@ int main() {
         {
             GradientPresets::Sexy("RAGE");
             
-            ImGui::Checkbox("AIMBOT", &aimbot_enabled);
-            ImGui::SliderFloat("FOV", &aimbot_fov, 10.0f, 180.0f);
-            ImGui::Checkbox("AIM AT ALL", &aimbot_all);
-            ImGui::Text("Toggle with Z");
-            ImGui::SliderFloat("MAX DISTANCE", &aimbot_max_distance, 5.0f, 750.0f);
-            
-            ImGui::Separator();
-            
             ImGui::Checkbox("SPINBOT", &spinbot_enabled);
             ImGui::SliderInt("SPEED", &spinbot_speed, 0, 50);
             
@@ -371,10 +360,49 @@ int main() {
         }
 
 
+        if (ImGui::BeginTabItem("AIMBOT"))
+        {
+            GradientPresets::Sexy("AIMBOT");
+            
+            ImGui::Checkbox("AIMBOT", &aimbot_enabled);
+            ImGui::Checkbox("AIM AT ALL", &aimbot_all);
+
+            ImGui::Separator();
+
+            ImGui::Text("Toggle aimbot with Z");
+
+            ImGui::Separator();
+
+            ImGui::SliderFloat("HEAD OFFSET", &headoffset, -2.0f, 2.0f);
+            ImGui::Text("DEFAULT: 0.275");
+            ImGui::Text("+ MORE");
+            ImGui::Text("- LESS");
+            ImGui::Separator();
+
+//            ImGui::SliderFloat("aim offset", &headoffset, -5.0f, 5.0f);
+            ImGui::SliderFloat("MAX DISTANCE", &aimbot_max_distance, 5.0f, 750.0f);
+            ImGui::SliderFloat("FOV", &aimbot_fov, 5.0f, 180.0f);
+        
+            ImGui::EndTabItem();
+        }
+
+
+        if (ImGui::BeginTabItem("CONFIG"))
+        {
+            GradientPresets::Sexy("CONFIG");
+
+            if (ImGui::Button("apply to config")) {
+                Config::setfovcircleenabled(fov_circle_enabled);
+                Config::save("config.json");
+            }
+        
+            ImGui::EndTabItem();
+        }
+
 
         ImGui::EndTabBar(); 
     }
-
+    
 
         ImGui::Spacing();
 
