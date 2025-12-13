@@ -11,6 +11,7 @@
 #include "ui_helpers.h"
 #include "image_loader.h"
 #include <d3d11.h>
+#include <chrono>
 
 /*
     i like to steal ascii art from the internet because i have no talent :3
@@ -43,6 +44,11 @@ bool fov_circle_enabled = false;
 bool rapid_fire_enabled = false;
 float aimbot_max_distance = 500.0f;
 float fov = 120.0f;
+
+//fps
+int frameCount = 0;
+int fps = 0;
+auto lastTime = std::chrono::high_resolution_clock::now();
 
 
 ID3D11ShaderResourceView* logo_pic = nullptr;
@@ -254,12 +260,36 @@ int main() {
             WriteProcessMemory(hProcess, (LPVOID)(localPlayer + 0x160), &zero, sizeof(int), nullptr);
         }
 
+        frameCount++;
+        auto now = std::chrono::high_resolution_clock::now();
+        float elapsed = std::chrono::duration<float>(now - lastTime).count();
+        if (elapsed >= 1.0f) {
+            fps = frameCount;
+            frameCount = 0;
+            lastTime = now;
+        }
+
 
 /////////////////////////////////////////////////////////////////////////////
 
         ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(500, 300), ImGuiCond_Once);
         ImGui::Begin("NEVER-WIN", nullptr);
+
+
+        //debug window
+        ImGui::SetNextWindowPos(ImVec2(600, 50), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_Once);
+        ImGui::Begin("DEBUG", nullptr);
+
+        ImGui::Text("DEBUG");
+        
+        ImGui::Text("OVERLAY FPS:%d", fps);
+
+
+
+
+        ImGui::End(); 
 
     if (ImGui::BeginTabBar("CHEATS"))
     {
