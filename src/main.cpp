@@ -12,6 +12,10 @@
 #include "image_loader.h"
 #include <d3d11.h>
 #include <chrono>
+#include "ect/json.hpp"
+#include "config.h"
+
+
 
 /*
     i like to steal ascii art from the internet because i have no talent :3
@@ -43,7 +47,8 @@ bool aimbot_all = false;
 bool fov_circle_enabled = false;
 bool rapid_fire_enabled = false;
 float aimbot_max_distance = 500.0f;
-float fov = 120.0f;
+float fov = 115.0f;
+
 
 //fps
 int frameCount = 0;
@@ -100,6 +105,11 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 int main() {
+
+
+    Config::load("config.json");//load config
+    fov = Config::getfov();// get fov
+
 
     ShowWindow(GetConsoleWindow(), SW_HIDE);
 
@@ -242,6 +252,11 @@ int main() {
         ReadProcessMemory(hProcess, (LPCVOID)(moduleBase + 0x17E0A8), &localPlayer, sizeof(localPlayer), nullptr);
 
 
+
+
+
+        Config::setfov(fov);
+
         WriteProcessMemory(hProcess, (LPVOID)(moduleBase + 0x18A7CC), &fov, sizeof(fov), nullptr); //WRITE FOV
         
         
@@ -296,6 +311,10 @@ int main() {
         if (ImGui::BeginTabItem("HOME"))
         {
             GradientPresets::Sexy("MADE BY linktr.ee/sigmacat123");
+
+            if (ImGui::Button("update json")) {
+                Config::save("config.json");
+            }
             
             ImGui::Spacing();
 
@@ -360,7 +379,11 @@ int main() {
         EndImGuiFrame();
     }
 
-    // Cleanup
+
+    if (logo_pic) {
+        logo_pic->Release();
+        logo_pic = nullptr;
+    }
     ShutdownImGui();
     CleanupDeviceD3D();
     DestroyWindow(hwnd);
