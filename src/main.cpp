@@ -54,11 +54,27 @@ bool snaplines = true;
 bool snaplines_all = false;
 
 
+const char* aim_at[] = { "lowest health", "closest" };
+int aimbot_aimat = 1; // 0, lowest health, 1, closest
 
-//fps
+
+
+//legit
+bool aimbot_chest = false;
+int legit_aim_amount = 0;
+int legit_aim_random = 0;
+
+
+
+
+
+
+//debug////////
 int frameCount = 0;
 int fps = 0;
 auto lastTime = std::chrono::high_resolution_clock::now();
+
+
 
 
 ID3D11ShaderResourceView* logo_pic = nullptr;
@@ -253,7 +269,10 @@ int main() {
             io.MousePos = ImVec2((float)mousePoint.x, (float)mousePoint.y);
         }
 */
+
         BeginImGuiFrame();
+
+
 
         // Render ESP
         if (espEnabled) {
@@ -286,10 +305,13 @@ int main() {
 
         WriteProcessMemory(hProcess, (LPVOID)(moduleBase + 0x18A7CC), &fov, sizeof(fov), nullptr); //WRITE FOV
         
-        
+        if(aimbot_chest){
+            headoffset = -0.427f;
+        }
+
 
         if (aimbot_enabled && localPlayer) {
-            UpdateAimbot(aimbot_all, hProcess, moduleBase, localPlayer, aimbot_enabled, aimbot_fov, aimbot_max_distance, headoffset);
+            UpdateAimbot(aimbot_all, hProcess, moduleBase, localPlayer, aimbot_enabled, aimbot_fov, aimbot_max_distance, headoffset, legit_aim_amount, aimbot_aimat);
         }
         
         if (spinbot_enabled && localPlayer) {
@@ -316,7 +338,21 @@ int main() {
 
         ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_Once);
+
         ImGui::Begin("NEVER-WIN", nullptr);
+        // Draw gradient background inside the window
+        {
+            ImDrawList* win_draw_list = ImGui::GetWindowDrawList();
+            ImVec2 win_pos = ImGui::GetWindowPos();
+            ImVec2 win_size = ImGui::GetWindowSize();
+            ImU32 color_top = IM_COL32(9, 6, 56, 220);    // Top color 40, 40, 80, 220
+            ImU32 color_bottom = IM_COL32(16, 16, 18, 220); // Bottom color (dark red, semi-transparent)
+            win_draw_list->AddRectFilledMultiColor(
+                win_pos,
+                ImVec2(win_pos.x + win_size.x, win_pos.y + win_size.y),
+                color_top, color_top, color_bottom, color_bottom
+            );
+        }
 
 
         //debug window
@@ -338,7 +374,8 @@ int main() {
         if (ImGui::BeginTabItem("HOME"))
         {
             GradientPresets::Sexy("MADE BY linktr.ee/sigmacat123");
-
+            ImGui::Text("NOTE: I RECOMMEND USING LEGIT");
+            ImGui::Text("AVOID GETTING BANNED BECAUSE IP BANS ARE ANNOYING");
             
             ImGui::Spacing();
 
@@ -400,14 +437,41 @@ int main() {
             ImGui::Separator();
 
             ImGui::SliderFloat("HEAD OFFSET", &headoffset, -2.0f, 2.0f);
+
+            if (ImGui::Button("reset head offset to default")) {
+                headoffset = 0.275f;
+            }
+
             ImGui::Text("DEFAULT: 0.275");
             ImGui::Text("+ MORE");
             ImGui::Text("- LESS");
             ImGui::Separator();
 
-//            ImGui::SliderFloat("aim offset", &headoffset, -5.0f, 5.0f);
+
             ImGui::SliderFloat("MAX DISTANCE", &aimbot_max_distance, 5.0f, 750.0f);
             ImGui::SliderFloat("FOV", &aimbot_fov, 5.0f, 180.0f);
+
+
+            if (ImGui::BeginCombo("Aim at", aim_at[aimbot_aimat])) {
+                for (int n = 0; n < IM_ARRAYSIZE(aim_at); n++) {
+                    bool is_selected = (aimbot_aimat == n);
+                    if (ImGui::Selectable(aim_at[n], is_selected)) {
+                        aimbot_aimat = n;
+                    }
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+
+            //legit
+            ImGui::Separator();
+
+            GradientPresets::Sexy("LEGIT");
+            ImGui::Checkbox("aim at chest (will change head offset)", &aimbot_chest);
+            ImGui::SliderInt("humanize (inverted +, -)", &legit_aim_amount, -100, 100);
+
+
         
             ImGui::EndTabItem();
         }

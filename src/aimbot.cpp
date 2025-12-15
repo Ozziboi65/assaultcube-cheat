@@ -33,11 +33,13 @@ void CalculateAngles(Vec3 from, Vec3 to, float& yaw, float& pitch) {
     pitch = atan2f(dz, distance) * (180.0f / 3.14159265f);
 }
 
-void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t localPlayer, bool enabled, float fov, float maxDistance, float headoffset) {
+void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t localPlayer, bool enabled, float fov, float maxDistance, float headoffset, int legit_aim, int aimbot_aimat) {
     if (!enabled || !localPlayer) return;
 
+    //bool is_random = false;
 
     int localTeam = 0;
+
 
     Vec3 localHead = { 0, 0, 0 };
     float currentYaw = 0.0f, currentPitch = 0.0f;
@@ -54,8 +56,12 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
     if (!entityList) return;
 
 
+
     uintptr_t closestEnemy = 0;
     float closestDistance = 9999.0f;
+    uintptr_t lowestHealthEnemy = 0;
+    int lowestHealth = 9999;
+
 
     for (int i = 0; i < 64; i++) {
         uintptr_t entity = 0;
@@ -80,9 +86,6 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
 
         if(!all && team == localTeam) continue;
 
-
-
-
         // Calculate angles to this enemy
         float targetYaw, targetPitch;
         CalculateAngles(localHead, enemyHead, targetYaw, targetPitch);
@@ -90,35 +93,58 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
         // Calculate angle difference (FOV check)
         float yawDiff = abs(targetYaw - currentYaw);
         float pitchDiff = abs(targetPitch - currentPitch);
-        
         // Normalize yaw difference (handle wrapping at 180/-180)
         if (yawDiff > 180.0f) yawDiff = 360.0f - yawDiff;
-        
 
         if (yawDiff > fov / 2.0f || pitchDiff > fov / 2.0f) continue;
 
-        distance = GetDistance(localHead, enemyHead); // just update the value, don't redeclare
+        // Find closest enemy
         if (distance < closestDistance && distance > 1.0f) {
             closestDistance = distance;
             closestEnemy = entity;
         }
+        // Find lowest health enemy
+        if (health < lowestHealth && distance > 1.0f) {
+            lowestHealth = health;
+            lowestHealthEnemy = entity;
+        }
     }
 
-    // Aim at closest enemy
-    if (closestEnemy) {
-        Vec3 enemyHead = { 0, 0, 0 };
-        ReadProcessMemory(hProcess, (LPCVOID)(closestEnemy + HEAD_X), &enemyHead.x, sizeof(float), nullptr);
-        ReadProcessMemory(hProcess, (LPCVOID)(closestEnemy + HEAD_Y), &enemyHead.y, sizeof(float), nullptr);
-        ReadProcessMemory(hProcess, (LPCVOID)(closestEnemy + HEAD_Z), &enemyHead.z, sizeof(float), nullptr);
+    // Aim at enemy
+    uintptr_t targetEnemy = 0;
+    if (aimbot_aimat == 0) {
+        targetEnemy = lowestHealthEnemy;
+    } else if (aimbot_aimat == 1) {
+        targetEnemy = closestEnemy;
+    }
 
-        
+    if (targetEnemy) {
+        Vec3 enemyHead = { 0, 0, 0 };
+        ReadProcessMemory(hProcess, (LPCVOID)(targetEnemy + HEAD_X), &enemyHead.x, sizeof(float), nullptr);
+        ReadProcessMemory(hProcess, (LPCVOID)(targetEnemy + HEAD_Y), &enemyHead.y, sizeof(float), nullptr);
+        ReadProcessMemory(hProcess, (LPCVOID)(targetEnemy + HEAD_Z), &enemyHead.z, sizeof(float), nullptr);
+
         enemyHead.z += 0.0f; //     aim up/down
         enemyHead.z += headoffset;
 
         float targetYaw, targetPitch;
         CalculateAngles(localHead, enemyHead, targetYaw, targetPitch);
 
-        WriteProcessMemory(hProcess, (LPVOID)(localPlayer + YAW), &targetYaw, sizeof(float), nullptr);
-        WriteProcessMemory(hProcess, (LPVOID)(localPlayer + PITCH), &targetPitch, sizeof(float), nullptr);
+        float smooth = legit_aim / 100.0f;
+        if (smooth < 0.05f) smooth = 0.05f; // Prevent zero or too slow
+        if (smooth > 1.0f) smooth = 1.0f;   // Prevent overshoot
+        float deltaYaw = targetYaw - currentYaw;
+        float deltaPitch = targetPitch - currentPitch;
+
+        // Normalize yaw to handle wrap-around
+        if (deltaYaw > 180.0f) deltaYaw -= 360.0f;
+        if (deltaYaw < -180.0f) deltaYaw += 360.0f;
+
+        // Calculate newYaw and newPitch with smoothing
+        float newYaw = currentYaw + deltaYaw * smooth;
+        float newPitch = currentPitch + deltaPitch * smooth;
+
+        WriteProcessMemory(hProcess, (LPVOID)(localPlayer + YAW), &newYaw, sizeof(float), nullptr); // smooth yaw
+        WriteProcessMemory(hProcess, (LPVOID)(localPlayer + PITCH), &newPitch, sizeof(float), nullptr); // smooth pitch
     }
 }
