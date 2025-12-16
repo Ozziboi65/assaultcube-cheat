@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include "config.h"
+#include "imgui.h"
 
 namespace Config {
 	nlohmann::json config;
@@ -38,10 +39,16 @@ namespace Config {
 	void setAimbotEnabled(bool enabled) {
 		config["aimbot_enabled"] = enabled;
 	}
+	
 
     void setfov(float newFov){
         config["FOV"] = newFov;
     }
+
+    void sethumanize(int value){
+        config["humanize"] = value;
+    }
+
 
 	float getfov(){
 		if (config.contains("FOV")) {
@@ -71,13 +78,23 @@ namespace Config {
 	}
 
 
-    void setaimbotfov(float newAimbotFov){
-        config["aimbotfov"] = newAimbotFov;
-    }
+	void setEspNames(bool value) {
+		config["EspNames"] = value;
+	}
 
-    void setaimbotdist(float newAimbotdist){
-        config["aimbotdist"] = newAimbotdist;
-    }
+
+
+	void setaimbotfov(float newAimbotFov){
+		config["aimbotfov"] = newAimbotFov;
+	}
+
+	void setaimbotdist(float newAimbotdist){
+		config["aimbotdist"] = newAimbotdist;
+	}
+
+	void setEspColor(ImVec4 EspColor) {
+		config["enemyEspColor"] = { EspColor.x, EspColor.y, EspColor.z, EspColor.w };
+	}
 
 	float getAimbotFov(){
 		if (config.contains("aimbotfov")) {
@@ -94,6 +111,28 @@ namespace Config {
 		return 750; //750 for  aim dist if fail
 	}
 
+	int gethumanize(){
+		if (config.contains("humanize")) {
+			return config["humanize"].get<int>();
+		}
+
+		return 0;
+	}
+
+	ImVec4 getenemyespcolor(){
+		if (config.contains("enemyEspColor") && config["enemyEspColor"].is_array() && config["enemyEspColor"].size() == 4) {
+			const auto& arr = config["enemyEspColor"];
+			return ImVec4(
+				arr[0].get<float>(),
+				arr[1].get<float>(),
+				arr[2].get<float>(),
+				arr[3].get<float>()
+			);
+		}
+		return ImVec4(2.55f, 0.0f, 0.0f, 1.00f); // default ESP color if fail
+	}
+
+
 	bool getsnaplines() {
 		if (config.contains("enablesnaplines")) {
 			return config["enablesnaplines"].get<bool>();
@@ -104,6 +143,13 @@ namespace Config {
 	bool getsnaplinesall() {
 		if (config.contains("snaplinesALL")) {
 			return config["snaplinesALL"].get<bool>();
+		}
+		return true; 
+	}
+
+	bool getEspNames() {
+		if (config.contains("EspNames")) {
+			return config["EspNames"].get<bool>();
 		}
 		return true; 
 	}

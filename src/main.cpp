@@ -17,6 +17,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <commdlg.h>
 
 /*
     i like to steal ascii art from the internet because i have no talent :3
@@ -39,10 +40,12 @@ int screenWidth = 0;
 int screenHeight = 0;
 bool espEnabled = true;
 bool teamEsp = false;
+bool esp_names = true;
 
 bool spinbot_enabled = false;
 int spinbot_speed = 0;
 bool aimbot_enabled = false;
+bool aimbot_vis = true;
 float aimbot_fov = 90.0f;
 bool aimbot_all = false;
 bool fov_circle_enabled = false;
@@ -54,10 +57,13 @@ bool snaplines = true;
 bool snaplines_all = false;
 
 
+
 const char* aim_at[] = { "lowest health", "closest" };
 int aimbot_aimat = 1; // 0, lowest health, 1, closest
 
 
+const char* aim_at_body[] = { "head", "chest"};
+int aimbot_aimat_body = 1; // 0, head, 1, chest 2, legs
 
 //legit
 bool aimbot_chest = false;
@@ -65,7 +71,8 @@ int legit_aim_amount = 0;
 int legit_aim_random = 0;
 
 
-
+//info
+int playercount = 0;
 
 
 
@@ -73,6 +80,11 @@ int legit_aim_random = 0;
 int frameCount = 0;
 int fps = 0;
 auto lastTime = std::chrono::high_resolution_clock::now();
+
+
+//visuals
+
+ImVec4 esp_color = ImVec4(2.55f, 0.0f, 0.0f, 1.00f);
 
 
 
@@ -137,13 +149,20 @@ int main() {
     ImGui_ImplWin32_EnableDpiAwareness();
 
 
+
     Config::load("config.json");//load config
+
+
+
     fov = Config::getfov();// get fov
     fov_circle_enabled = Config::getfovcircleenabled();
     aimbot_fov = Config::getAimbotFov();
     aimbot_max_distance = Config::getAimbotmaxdist();
     snaplines = Config::getsnaplines();
     snaplines_all = Config::getsnaplinesall();
+    esp_names = Config::getEspNames();
+    legit_aim_amount = Config::gethumanize();
+    esp_color = Config::getenemyespcolor();
 
 
     ShowWindow(GetConsoleWindow(), SW_HIDE);
@@ -162,7 +181,7 @@ int main() {
     HWND hwnd = CreateWindowExW(
         WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_NOACTIVATE,
         wc.lpszClassName,
-        L"AC Cheat",
+        L"NEVER WIN",
         WS_POPUP,
         0, 0, screenWidth, screenHeight,
         nullptr, nullptr, wc.hInstance, nullptr
@@ -274,9 +293,10 @@ int main() {
 
 
 
+
         // Render ESP
         if (espEnabled) {
-            RenderESP(teamEsp, hProcess, moduleBase, screenWidth, screenHeight, snaplines, snaplines_all);
+            RenderESP(teamEsp, hProcess, moduleBase, screenWidth, screenHeight, snaplines, snaplines_all, esp_names);
         }
 
         // Render FOV circle
@@ -298,6 +318,10 @@ int main() {
         ReadProcessMemory(hProcess, (LPCVOID)(moduleBase + 0x17E0A8), &localPlayer, sizeof(localPlayer), nullptr);
 
 
+        ReadProcessMemory(hProcess, (LPCVOID)(moduleBase + 0x18AC0C), &playercount, sizeof(localPlayer), nullptr);
+
+
+
 
 
 
@@ -305,13 +329,17 @@ int main() {
 
         WriteProcessMemory(hProcess, (LPVOID)(moduleBase + 0x18A7CC), &fov, sizeof(fov), nullptr); //WRITE FOV
         
-        if(aimbot_chest){
-            headoffset = -0.427f;
+        if(aimbot_aimat_body == 0){
+            headoffset = 0.275f;
+        }
+
+        if(aimbot_aimat_body == 1){
+            headoffset = -0.655;
         }
 
 
         if (aimbot_enabled && localPlayer) {
-            UpdateAimbot(aimbot_all, hProcess, moduleBase, localPlayer, aimbot_enabled, aimbot_fov, aimbot_max_distance, headoffset, legit_aim_amount, aimbot_aimat);
+            UpdateAimbot(aimbot_all, hProcess, moduleBase, localPlayer, aimbot_enabled, aimbot_fov, aimbot_max_distance, headoffset, legit_aim_amount, aimbot_aimat, aimbot_vis);
         }
         
         if (spinbot_enabled && localPlayer) {
@@ -369,6 +397,20 @@ int main() {
 
         ImGui::End(); 
 
+        //info window
+        ImGui::SetNextWindowPos(ImVec2(600, 50), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
+        ImGui::Begin("INFO", nullptr);
+
+        ImGui::Text("MATCH INFO:");
+        
+        ImGui::Text("player count: %d", playercount);
+
+
+
+
+        ImGui::End(); 
+
     if (ImGui::BeginTabBar("CHEATS"))
     {
         if (ImGui::BeginTabItem("HOME"))
@@ -376,7 +418,7 @@ int main() {
             GradientPresets::Sexy("MADE BY linktr.ee/sigmacat123");
             ImGui::Text("NOTE: I RECOMMEND USING LEGIT");
             ImGui::Text("AVOID GETTING BANNED BECAUSE IP BANS ARE ANNOYING");
-            
+
             ImGui::Spacing();
 
             if (logo_pic) {
@@ -393,6 +435,7 @@ int main() {
             GradientPresets::Sexy("VISUALS");
             ImGui::Checkbox("ESP", &espEnabled);
             ImGui::Checkbox("TEAM ESP", &teamEsp);
+            ImGui::Checkbox("show names", &esp_names);
 
             
             ImGui::Separator();
@@ -405,9 +448,14 @@ int main() {
             ImGui::Checkbox("snaplines", &snaplines);
             ImGui::Separator();
             ImGui::Checkbox("snaplines, show all", &snaplines_all);
+
+            ImGui::ColorEdit4("enemy esp color", (float*)&esp_color);
             
             ImGui::EndTabItem();
         }
+
+
+
 
         if (ImGui::BeginTabItem("RAGE"))
         {
@@ -436,11 +484,11 @@ int main() {
 
             ImGui::Separator();
 
-            ImGui::SliderFloat("HEAD OFFSET", &headoffset, -2.0f, 2.0f);
+//            ImGui::SliderFloat("HEAD OFFSET", &headoffset, -2.0f, 2.0f);
 
-            if (ImGui::Button("reset head offset to default")) {
-                headoffset = 0.275f;
-            }
+//            if (ImGui::Button("reset head offset to default")) {
+//                headoffset = 0.275f;
+//           }
 
             ImGui::Text("DEFAULT: 0.275");
             ImGui::Text("+ MORE");
@@ -452,7 +500,7 @@ int main() {
             ImGui::SliderFloat("FOV", &aimbot_fov, 5.0f, 180.0f);
 
 
-            if (ImGui::BeginCombo("Aim at", aim_at[aimbot_aimat])) {
+            if (ImGui::BeginCombo("Aim priority", aim_at[aimbot_aimat])) {
                 for (int n = 0; n < IM_ARRAYSIZE(aim_at); n++) {
                     bool is_selected = (aimbot_aimat == n);
                     if (ImGui::Selectable(aim_at[n], is_selected)) {
@@ -468,7 +516,19 @@ int main() {
             ImGui::Separator();
 
             GradientPresets::Sexy("LEGIT");
-            ImGui::Checkbox("aim at chest (will change head offset)", &aimbot_chest);
+
+            if (ImGui::BeginCombo("Aim at...", aim_at_body[aimbot_aimat_body])) {
+                for (int n = 0; n < IM_ARRAYSIZE(aim_at_body); n++) {
+                    bool is_selected = (aimbot_aimat_body == n);
+                    if (ImGui::Selectable(aim_at_body[n], is_selected)) {
+                        aimbot_aimat_body = n;
+                    }
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+
             ImGui::SliderInt("humanize (inverted +, -)", &legit_aim_amount, -100, 100);
 
 
@@ -480,17 +540,24 @@ int main() {
         if (ImGui::BeginTabItem("CONFIG"))
         {
             GradientPresets::Sexy("CONFIG");
+            
 
             if (ImGui::Button("apply to config")) {
                 Config::setfovcircleenabled(fov_circle_enabled);
                 Config::setaimbotfov(aimbot_fov);
                 Config::setaimbotdist(aimbot_max_distance);
                 Config::setsnaplines(snaplines);
+                Config::setEspNames(esp_names);
+                Config::sethumanize(legit_aim_amount);
+                Config::setEspColor(esp_color);
                 Config::save("config.json");
             }
         
             ImGui::EndTabItem();
         }
+
+
+
 
 
         ImGui::EndTabBar(); 

@@ -24,6 +24,7 @@ namespace Offsets {
     const uintptr_t FEET_Y = 0x2C;
     const uintptr_t FEET_Z = 0x30;
     const uintptr_t ATTACK_DELAY = 0x160;  // Rapid fire
+    const uintptr_t ARMOR = 0xF0;
 }
 
 
@@ -38,4 +39,4 @@ T ReadMemory(HANDLE hProcess, uintptr_t address) {
 bool WorldToScreen(Vec3 pos, float matrix[16], Vec2& screen, int screenWidth, int screenHeight);
 
 
-void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWidth, int screenHeight, bool snaplines, bool snaplinesall);
+void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWidth, int screenHeight, bool snaplines, bool snaplinesall, bool esp_names);

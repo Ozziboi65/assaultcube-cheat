@@ -2,6 +2,8 @@
 #include "ect/imgui/imgui.h"
 #include <windows.h>
 #include "config.h"
+#include <iostream>
+#include "imgui.h"
 
 bool WorldToScreen(Vec3 pos, float matrix[16], Vec2& screen, int screenWidth, int screenHeight) {
 
@@ -27,7 +29,10 @@ bool WorldToScreen(Vec3 pos, float matrix[16], Vec2& screen, int screenWidth, in
 }
 
 
-void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWidth, int screenHeight, bool snaplines, bool snaplines_all) {
+void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWidth, int screenHeight, bool snaplines, bool snaplines_all, bool esp_names) {
+
+    ImVec4 esp_color = Config::getenemyespcolor();
+    
 
     uintptr_t localPlayer = ReadMemory<uintptr_t>(hProcess, moduleBase + Offsets::LOCALPLAYER);
     uintptr_t entityList = ReadMemory<uintptr_t>(hProcess, moduleBase + Offsets::ENTITYLIST);
@@ -50,9 +55,13 @@ void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWi
         int health = ReadMemory<int>(hProcess, entity + Offsets::HEALTH);
         if (health <= 0 || health > 100) continue;
 
+        int armor = ReadMemory<int>(hProcess, entity + Offsets::ARMOR);
+        if (!entity || entity == localPlayer) continue;
 
         int team = ReadMemory<int>(hProcess, entity + Offsets::TEAM);
         if (team == localTeam && !teamesp) continue;
+
+        if(team == 4) continue; //dont render spectators
 
 
         Vec3 head;
@@ -67,6 +76,13 @@ void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWi
         feet.z = ReadMemory<float>(hProcess, entity + Offsets::FEET_Z);
 
 
+
+
+
+
+
+
+
         Vec2 headScreen, feetScreen;
         if (!WorldToScreen(head, viewMatrix, headScreen, screenWidth, screenHeight)) continue;
         if (!WorldToScreen(feet, viewMatrix, feetScreen, screenWidth, screenHeight)) continue;
@@ -78,9 +94,36 @@ void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWi
         drawList->AddRect(
             ImVec2(headScreen.x - boxWidth / 2, headScreen.y),
             ImVec2(headScreen.x + boxWidth / 2, feetScreen.y),
-            teamesp && team == localTeam ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255)
+            teamesp && team == localTeam ? IM_COL32(0, 255, 0, 255) : IM_COL32(
+                static_cast<int>(esp_color.x * 255),
+                static_cast<int>(esp_color.y * 255),
+                static_cast<int>(esp_color.z * 255),
+                static_cast<int>(esp_color.w * 255)
+            )
         );
 
+        // i only read names if we have esp names on :)
+        if(esp_names){
+            char name[17] = {0};
+            ReadProcessMemory(hProcess, (LPCVOID)(entity + 0x205), &name, 16, nullptr);
+            if (name[0] != '\0') {
+                drawList->AddText(ImVec2(headScreen.x, headScreen.y - 15), IM_COL32(255,255,255,255), name);
+            }
+        }
+
+        char armorText[16];
+        snprintf(armorText, sizeof(armorText), "armor: %d", armor);
+
+        drawList->AddText(
+            ImVec2(feetScreen.x, feetScreen.y), IM_COL32(7,0,207,255), armorText);
+
+
+        //char team_debug_Text[15];
+        //snprintf(team_debug_Text, sizeof(team_debug_Text), "DEBUG, TEAM: %d", team);       //DEBUG CODE FOR RENDERIRING TEAM OF PLAYER
+
+//        drawList->AddText(
+//            ImVec2(feetScreen.x, feetScreen.y - 25), IM_COL32(7,0,207,255), team_debug_Text);
+            
 
         drawList->AddRectFilled(
             ImVec2(headScreen.x - boxWidth / 2 - 6, headScreen.y),
@@ -113,10 +156,22 @@ void RenderESP(bool teamesp, HANDLE hProcess, uintptr_t moduleBase, int screenWi
             255
         );
 
+
+
+
+
+
         drawList->AddRectFilled(
-            ImVec2(headScreen.x - boxWidth / 2 - 5, headScreen.y + boxHeight * (1 - healthPercent)),
-            ImVec2(headScreen.x - boxWidth / 2 - 4, feetScreen.y),
+            ImVec2(headScreen.x - boxWidth / 2 - 8, headScreen.y),
+            ImVec2(headScreen.x - boxWidth / 2 - 6, feetScreen.y),
+            IM_COL32(0, 0, 0, 255)
+        );
+        drawList->AddRectFilled(
+            ImVec2(headScreen.x - boxWidth / 2 - 8, headScreen.y + boxHeight * (1 - healthPercent)),
+            ImVec2(headScreen.x - boxWidth / 2 - 6, feetScreen.y),
             healthColor
         );
+
+
     }
 }

@@ -1,6 +1,7 @@
 #include "aimbot.h"
 #include <cmath>
 #include <limits>
+#include <iostream>
 
 const uintptr_t ENTITYLIST = 0x18AC04;
 const uintptr_t HEALTH = 0xEC;
@@ -10,6 +11,13 @@ const uintptr_t HEAD_Y = 0x08;
 const uintptr_t HEAD_Z = 0x0C;
 const uintptr_t YAW = 0x34;
 const uintptr_t PITCH = 0x38;
+
+
+//const uintptr_t CURRENT_FRAME = 0x57F10C; //CurrentFrame
+//const uintptr_t LAST_FRAME = 0xE4; //last frame player visble
+//const uintptr_t FIRST_FRAME = 0xD4; // first frame visible UNUSED
+//const uintptr_t FIRST_FRAME2 = 0xD8;// first frame2 visible UNUSED
+//const uintptr_t VIS_TRESHOLD = 0x58A918; //VIS TRESHOLD
 
 struct Vec3 {
     float x, y, z;
@@ -33,7 +41,7 @@ void CalculateAngles(Vec3 from, Vec3 to, float& yaw, float& pitch) {
     pitch = atan2f(dz, distance) * (180.0f / 3.14159265f);
 }
 
-void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t localPlayer, bool enabled, float fov, float maxDistance, float headoffset, int legit_aim, int aimbot_aimat) {
+void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t localPlayer, bool enabled, float fov, float maxDistance, float headoffset, int legit_aim, int aimbot_aimat, bool aimbot_vis) {
     if (!enabled || !localPlayer) return;
 
     //bool is_random = false;
@@ -86,6 +94,8 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
 
         if(!all && team == localTeam) continue;
 
+        if(team == 4) continue; //dont aim at spectators
+
         // Calculate angles to this enemy
         float targetYaw, targetPitch;
         CalculateAngles(localHead, enemyHead, targetYaw, targetPitch);
@@ -110,6 +120,9 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
         }
     }
 
+
+
+
     // Aim at enemy
     uintptr_t targetEnemy = 0;
     if (aimbot_aimat == 0) {
@@ -117,6 +130,7 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
     } else if (aimbot_aimat == 1) {
         targetEnemy = closestEnemy;
     }
+    
 
     if (targetEnemy) {
         Vec3 enemyHead = { 0, 0, 0 };
@@ -147,4 +161,23 @@ void UpdateAimbot(bool all, HANDLE hProcess, uintptr_t moduleBase, uintptr_t loc
         WriteProcessMemory(hProcess, (LPVOID)(localPlayer + YAW), &newYaw, sizeof(float), nullptr); // smooth yaw
         WriteProcessMemory(hProcess, (LPVOID)(localPlayer + PITCH), &newPitch, sizeof(float), nullptr); // smooth pitch
     }
+
+/* // unused
+
+    if (targetEnemy) {
+
+        int currentFrame = 0;
+        int lastVisibleFrame = 0;
+        int visibilityThreshold = 0;
+        
+        ReadProcessMemory(hProcess, (LPCVOID)(moduleBase +CURRENT_FRAME), &currentFrame, sizeof(int), nullptr);
+        ReadProcessMemory(hProcess, (LPCVOID)(targetEnemy + 0xE4), &lastVisibleFrame, sizeof(int), nullptr);
+        ReadProcessMemory(hProcess, (LPCVOID)(moduleBase + VIS_TRESHOLD), &visibilityThreshold, sizeof(int), nullptr);
+
+        if (abs(currentFrame - lastVisibleFrame) <= visibilityThreshold) {
+            std::cout << "can see enemy" << std::endl;
+        }
+    }
+
+*/
 }

@@ -2,6 +2,7 @@
 #pragma once
 #include <string>
 #include "json.hpp" 
+#include "imgui.h"
 
 namespace Config {
 	extern nlohmann::json config;
@@ -16,6 +17,11 @@ namespace Config {
 	float getAimbotmaxdist();
 	bool getsnaplines();
 	bool getsnaplinesall();
+	bool getEspNames();
+	int gethumanize();
+
+	//vectors
+	ImVec4 getenemyespcolor();
 
 	void setAimbotEnabled(bool enabled); 
     void setfov(float newFov);
@@ -24,4 +30,7 @@ namespace Config {
 	void setaimbotdist(float newAimbotdist);
 	void setsnaplines(bool enablesnaplines);
 	void setsnaplinesall(bool snaplinesaALL);
+	void setEspNames(bool espNames);
+	void sethumanize(int humanize);
+	void setEspColor(ImVec4 EspColor);
 }
