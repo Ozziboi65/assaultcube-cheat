@@ -1,9 +1,0 @@
-﻿  Source.cpp
-C:\cheat\AC\neverwin\Source.cpp(73,84): error C2059: syntax error: '<'
-C:\cheat\AC\neverwin\Source.cpp(83,64): error C2065: 'LOCALPLAYER_OFFSET': undeclared identifier
-C:\cheat\AC\neverwin\Source.cpp(83,13): error C2660: 'ReadProcessMemory': function does not take 4 arguments
-      C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\um\memoryapi.h(152,1):
-      see declaration of 'ReadProcessMemory'
-      C:\cheat\AC\neverwin\Source.cpp(83,13):
-      while trying to match the argument list '(HANDLE, uintptr_t *, size_t, nullptr)'
-  
